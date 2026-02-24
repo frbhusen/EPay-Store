@@ -90,7 +90,6 @@ const AdminDashboard = ({ isAuthenticated }) => {
 
   const isEservicesTab = activeTab === 'eservices';
   const currentType = isEservicesTab ? 'eservice' : (activeTab === 'products' ? 'product' : undefined);
-  const currentTypeLabel = isEservicesTab ? 'E-Service' : 'Product';
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -572,12 +571,6 @@ const AdminDashboard = ({ isAuthenticated }) => {
   };
 
   const handleAddCategory = () => {
-    setEditingCategory(null);
-    setCategoryForm({ name: '', description: '', image: '', defaultPrice: '', type: 'eservice', defaultDiscount: '', applyDefaultsToProducts: false });
-    setShowCategoryForm(true);
-  };
-
-  const handleAddEserviceCategory = () => {
     setEditingCategory(null);
     setCategoryForm({ name: '', description: '', image: '', defaultPrice: '', type: 'eservice', defaultDiscount: '', applyDefaultsToProducts: false });
     setShowCategoryForm(true);

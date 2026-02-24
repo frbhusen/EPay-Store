@@ -5,7 +5,13 @@ const SubCategory = require('../models/SubCategory');
 exports.getAllProducts = async (req, res) => {
   try {
     const { category, search, type } = req.query;
-    let filter = { active: true };
+    let filter = {
+      $or: [
+        { active: true },
+        { active: { $exists: false } },
+        { active: null }
+      ]
+    };
     const andFilters = [];
 
     // Debug incoming query for troubleshooting filtering issues
@@ -219,7 +225,7 @@ exports.getProductById = async (req, res) => {
 
 exports.createProduct = async (req, res) => {
   try {
-    const { name, description, price, discount, image, category, type, subCategory } = req.body;
+    const { name, description, price, discount, image, category, type, subCategory, mostVisited } = req.body;
 
     let categoryDoc = null;
     let subCategoryDoc = null;
@@ -272,7 +278,8 @@ exports.createProduct = async (req, res) => {
       category: categoryDoc._id,
       subCategory: subCategoryDoc?._id,
       order: orderValue,
-      type: resolvedType
+      type: resolvedType,
+      mostVisited: typeof mostVisited !== 'undefined' ? !!mostVisited : undefined
     });
 
     await product.save();
@@ -287,7 +294,7 @@ exports.createProduct = async (req, res) => {
 
 exports.updateProduct = async (req, res) => {
   try {
-    const { name, description, price, discount, image, category, active, type, subCategory } = req.body;
+    const { name, description, price, discount, image, category, active, type, subCategory, mostVisited } = req.body;
 
     const update = { updatedAt: Date.now() };
     if (typeof name !== 'undefined') update.name = name;
@@ -299,6 +306,7 @@ exports.updateProduct = async (req, res) => {
     if (typeof subCategory !== 'undefined') update.subCategory = subCategory === '' ? undefined : subCategory;
     if (typeof active !== 'undefined') update.active = active;
     if (typeof type !== 'undefined') update.type = type;
+    if (typeof mostVisited !== 'undefined') update.mostVisited = !!mostVisited;
 
     let subCategoryDoc = null;
     if (typeof subCategory !== 'undefined' && subCategory) {
@@ -362,6 +370,47 @@ exports.deleteProduct = async (req, res) => {
       return res.status(404).json({ message: 'Product not found' });
     }
     res.json({ message: 'Product deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+// Add review to product
+exports.addReview = async (req, res) => {
+  try {
+    const { user, rating, comment } = req.body;
+    
+    if (!user || !rating || !comment) {
+      return res.status(400).json({ message: 'User, rating, and comment are required' });
+    }
+    
+    if (rating < 1 || rating > 5) {
+      return res.status(400).json({ message: 'Rating must be between 1 and 5' });
+    }
+    
+    const product = await Product.findById(req.params.id);
+    if (!product) {
+      return res.status(404).json({ message: 'Product not found' });
+    }
+    
+    // Add review
+    product.reviews.push({
+      user,
+      rating,
+      comment,
+      createdAt: new Date()
+    });
+    
+    // Also add to ratings for average calculation
+    product.ratings.push({
+      user,
+      rating,
+      createdAt: new Date()
+    });
+    
+    await product.save();
+    
+    res.json({ message: 'Review added successfully', product });
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
   }

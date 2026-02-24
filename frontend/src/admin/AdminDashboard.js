@@ -63,7 +63,8 @@ const AdminDashboard = ({ isAuthenticated }) => {
     image: '',
     category: '',
     subCategory: '',
-    currency: null
+    currency: null,
+    mostVisited: false
   });
 
   const [subCategoryForm, setSubCategoryForm] = useState({
@@ -81,7 +82,7 @@ const AdminDashboard = ({ isAuthenticated }) => {
     description: '',
     image: '',
     defaultPrice: '',
-    type: 'product',
+    type: 'eservice',
     defaultDiscount: '',
     applyDefaultsToProducts: false,
     currency: null
@@ -200,11 +201,9 @@ const AdminDashboard = ({ isAuthenticated }) => {
 
   useEffect(() => {
     if (activeTab === 'products' || activeTab === 'eservices') {
-      const type = activeTab === 'eservices' ? 'eservice' : 'product';
-      fetchProducts(type);
-      fetchCategories(type);
-      // fetch sub-categories for the current type so admin can manage them for both products and e-services
-      fetchSubCategories(type);
+      fetchProducts();
+      fetchCategories();
+      fetchSubCategories();
     } else if (activeTab === 'categories') {
       fetchCategories();
     } else if (activeTab === 'settings') {
@@ -231,7 +230,9 @@ const AdminDashboard = ({ isAuthenticated }) => {
       discount: '',
       image: '',
       category: '',
-      subCategory: ''
+      subCategory: '',
+      currency: null,
+      mostVisited: false
     });
     setShowProductForm(true);
   };
@@ -375,7 +376,8 @@ const AdminDashboard = ({ isAuthenticated }) => {
       image: normalizeImageUrl(product.image),
       category: product.category?._id || '',
       subCategory: product.subCategory?._id || '',
-      currency: product.currency || null
+      currency: product.currency || null,
+      mostVisited: product.mostVisited || false
     });
     setShowProductForm(false);
     setInlineEditProductId(product._id);
@@ -460,7 +462,17 @@ const AdminDashboard = ({ isAuthenticated }) => {
 
   const handleSaveProduct = async (e) => {
     e.preventDefault();
-    const resolvedType = productForm.type || (isEservicesTab ? 'eservice' : 'product');
+    const resolvedType = (() => {
+      if (productForm.subCategory) {
+        const sub = subCategories.find(s => s._id === productForm.subCategory);
+        return sub?.type || sub?.category?.type || productForm.type;
+      }
+      if (productForm.category) {
+        const cat = categories.find(c => c._id === productForm.category);
+        return cat?.type || productForm.type;
+      }
+      return productForm.type || (isEservicesTab ? 'eservice' : 'product');
+    })();
     const payload = {
       ...productForm,
       type: resolvedType,
@@ -561,7 +573,7 @@ const AdminDashboard = ({ isAuthenticated }) => {
 
   const handleAddCategory = () => {
     setEditingCategory(null);
-    setCategoryForm({ name: '', description: '', image: '', defaultPrice: '', type: 'product', defaultDiscount: '', applyDefaultsToProducts: false });
+    setCategoryForm({ name: '', description: '', image: '', defaultPrice: '', type: 'eservice', defaultDiscount: '', applyDefaultsToProducts: false });
     setShowCategoryForm(true);
   };
 
@@ -686,8 +698,7 @@ const AdminDashboard = ({ isAuthenticated }) => {
       }
       setShowCategoryForm(false);
       setInlineEditCategoryId(null);
-      const type = activeTab === 'eservices' ? 'eservice' : (activeTab === 'products' ? 'product' : undefined);
-      fetchCategories(type);
+      fetchCategories();
     } catch (error) {
       alert('Error saving category');
     }
@@ -697,8 +708,7 @@ const AdminDashboard = ({ isAuthenticated }) => {
     if (window.confirm('Are you sure you want to delete this category?')) {
       try {
         await api.delete(`/categories/${id}`);
-        const type = activeTab === 'eservices' ? 'eservice' : (activeTab === 'products' ? 'product' : undefined);
-        fetchCategories(type);
+        fetchCategories();
       } catch (error) {
         alert('Error deleting category');
       }
@@ -944,54 +954,74 @@ const AdminDashboard = ({ isAuthenticated }) => {
     });
   };
 
-  const renderProductForm = (onCancel) => (
-    <form className="form-card" onSubmit={handleSaveProduct}>
+  const renderProductForm = (onCancel) => {
+    const previewCurrency = productForm.currency || settingsCurrency || 'SYP';
+    const availableSubCategories = productForm.category
+      ? subCategories.filter(s => s.category?._id === productForm.category)
+      : subCategories;
+    const hasSubCategories = availableSubCategories.length > 0;
+    const resolvedPrice = Number(productForm.price || 0);
+    const resolvedDiscount = Number(productForm.discount || 0);
+    const finalPrice = resolvedPrice * (1 - resolvedDiscount / 100);
+
+    return (
+      <form className="form-card" onSubmit={handleSaveProduct}>
       <h3>{editingProduct ? (isEservicesTab ? 'Edit E-Service' : 'Edit Product') : (isEservicesTab ? 'Add New E-Service' : 'Add New Product')}</h3>
-      <div className="form-group">
-        <label>{isEservicesTab ? 'Service Name' : 'Product Name'}</label>
-        <input
-          type="text"
-          value={productForm.name}
-          onChange={(e) => setProductForm({...productForm, name: e.target.value})}
-          required
-        />
-      </div>
-      <div className="form-group">
-        <label>Description</label>
-        <textarea
-          value={productForm.description}
-          onChange={(e) => setProductForm({...productForm, description: e.target.value})}
-        />
-      </div>
-      <div className="form-group">
-        <label>Type</label>
-        <select
-          value={productForm.type}
-          onChange={(e) => setProductForm({...productForm, type: e.target.value})}
-          disabled={activeTab === 'products' || activeTab === 'eservices'}
-        >
-          <option value="product">Physical Product</option>
-          <option value="eservice">E-Service</option>
-        </select>
-      </div>
-      <div className="form-row">
-        <div className="form-group">
-          <label>Price</label>
-          <input
-            type="number"
-            step="0.01"
-            value={productForm.price}
-            onChange={(e) => setProductForm({...productForm, price: e.target.value})}
-          />
-        </div>
-        <div className="form-group">
-          <label>Discount (%)</label>
-          <input
-            type="number"
-            step="0.1"
-            value={productForm.discount}
-            onChange={(e) => setProductForm({...productForm, discount: e.target.value})}
-          />
+      <div className="admin-preview-panel">
+        <h4>Live Preview</h4>
+        <div className="preview-product-card">
+          <div className="preview-product-image">
+            <img
+              src={normalizeImageUrl(productForm.image) || logo}
+              alt={productForm.name || 'Product preview'}
+            />
+            {resolvedDiscount > 0 && (
+              <div className="preview-discount">-{resolvedDiscount}%</div>
+            )}
+          </div>
+          <div className="preview-product-info">
+            <input
+              className="preview-input"
+              type="text"
+              placeholder="Product name"
+              value={productForm.name}
+              onChange={(e) => setProductForm({ ...productForm, name: e.target.value })}
+            />
+            <textarea
+              className="preview-textarea"
+              placeholder="Product description"
+              value={productForm.description}
+              onChange={(e) => setProductForm({ ...productForm, description: e.target.value })}
+            />
+            <div className="preview-price">
+              <div className="preview-field">
+                <label>Price</label>
+                <input
+                  className="preview-input"
+                  type="number"
+                  step="0.01"
+                  value={productForm.price}
+                  onChange={(e) => setProductForm({ ...productForm, price: e.target.value })}
+                />
+              </div>
+              <div className="preview-field">
+                <label>Discount %</label>
+                <input
+                  className="preview-input"
+                  type="number"
+                  step="0.1"
+                  value={productForm.discount}
+                  onChange={(e) => setProductForm({ ...productForm, discount: e.target.value })}
+                />
+              </div>
+            </div>
+            <div className="preview-price">
+              {resolvedDiscount > 0 && (
+                <span className="preview-original">{`${previewCurrency} ${resolvedPrice.toFixed(2)}`}</span>
+              )}
+              <span className="preview-final">{`${previewCurrency} ${finalPrice.toFixed(2)}`}</span>
+            </div>
+          </div>
         </div>
       </div>
       <div className="form-group">
@@ -1009,11 +1039,15 @@ const AdminDashboard = ({ isAuthenticated }) => {
           value={productForm.category}
           onChange={async (e) => {
             const catId = e.target.value;
-            const updated = applyCategoryDefaultsToProduct(catId, {...productForm, category: catId});
+            const updated = applyCategoryDefaultsToProduct(catId, {
+              ...productForm,
+              category: catId,
+              subCategory: ''
+            });
             setProductForm(updated);
-            // fetch sub-categories for this category and current product type
+            // fetch sub-categories for this category
             try {
-              await fetchSubCategories(productForm.type || currentType, catId);
+              await fetchSubCategories(undefined, catId);
             } catch (err) {
               // ignore
             }
@@ -1021,46 +1055,54 @@ const AdminDashboard = ({ isAuthenticated }) => {
           required
         >
           <option value="">Select Category</option>
-          {categories
-            .filter(cat => !productForm.type || cat.type === productForm.type)
-            .map(cat => (
-              <option key={cat._id} value={cat._id}>{cat.name}</option>
-            ))}
+          {categories.map(cat => (
+            <option key={cat._id} value={cat._id}>{cat.name}</option>
+          ))}
         </select>
       </div>
 
-      {productForm.category && subCategories.filter(s => s.category?._id === productForm.category).length > 0 && (
-        <div className="form-group">
-          <label>Sub-Category{productForm.type === 'eservice' ? ' (required)' : ' (optional)'}</label>
-          <select
-            value={productForm.subCategory}
-            onChange={(e) => {
-              const subId = e.target.value;
-              const sub = subCategories.find(s => s._id === subId);
-              const updated = { ...productForm, subCategory: subId };
-              if (sub) {
-                if (!updated.price && typeof sub.defaultPrice !== 'undefined' && sub.defaultPrice !== null) {
-                  updated.price = sub.defaultPrice;
-                }
-                if ((updated.discount === '' || updated.discount === null || typeof updated.discount === 'undefined')
-                  && typeof sub.defaultDiscount !== 'undefined' && sub.defaultDiscount !== null) {
-                  updated.discount = sub.defaultDiscount;
-                }
-                if (!updated.description && sub.description) {
-                  updated.description = sub.description;
-                }
+      <div className="form-group">
+        <label>Sub-Category{productForm.type === 'eservice' ? ' (required)' : ' (optional)'}</label>
+        <select
+          value={productForm.subCategory}
+          onChange={(e) => {
+            const subId = e.target.value;
+            const sub = subCategories.find(s => s._id === subId);
+            let updated = { ...productForm, subCategory: subId };
+
+            if (sub?.category?._id && sub.category._id !== productForm.category) {
+              updated = applyCategoryDefaultsToProduct(sub.category._id, {
+                ...updated,
+                category: sub.category._id
+              });
+            }
+
+            if (sub) {
+              if (!updated.price && typeof sub.defaultPrice !== 'undefined' && sub.defaultPrice !== null) {
+                updated.price = sub.defaultPrice;
               }
-              setProductForm(updated);
-            }}
-            required={productForm.type === 'eservice'}
-          >
-            <option value="">{productForm.type === 'eservice' ? 'Select Sub-Category' : 'None'}</option>
-            {subCategories.filter(s => s.category?._id === productForm.category).map(sub => (
-              <option key={sub._id} value={sub._id}>{sub.name}</option>
-            ))}
-          </select>
-        </div>
-      )}
+              if ((updated.discount === '' || updated.discount === null || typeof updated.discount === 'undefined')
+                && typeof sub.defaultDiscount !== 'undefined' && sub.defaultDiscount !== null) {
+                updated.discount = sub.defaultDiscount;
+              }
+              if (!updated.description && sub.description) {
+                updated.description = sub.description;
+              }
+            }
+
+            setProductForm(updated);
+          }}
+          required={productForm.type === 'eservice'}
+          disabled={!hasSubCategories}
+        >
+          <option value="">{hasSubCategories ? 'Select Sub-Category' : 'No sub-categories available'}</option>
+          {availableSubCategories.map(sub => (
+            <option key={sub._id} value={sub._id}>
+              {productForm.category ? sub.name : `${sub.category?.name || 'Category'} › ${sub.name}`}
+            </option>
+          ))}
+        </select>
+      </div>
       <div className="form-group">
         <label>Currency Override (optional)</label>
         <select
@@ -1072,6 +1114,16 @@ const AdminDashboard = ({ isAuthenticated }) => {
           <option value="USD">USD</option>
         </select>
       </div>
+      <div className="form-group checkbox-group">
+        <label>
+          <input
+            type="checkbox"
+            checked={productForm.mostVisited}
+            onChange={(e) => setProductForm({...productForm, mostVisited: e.target.checked})}
+          />
+          Show in "Most Visited" section on homepage
+        </label>
+      </div>
       <div className="form-buttons">
         <button type="submit" className="btn-primary">Save</button>
         <button
@@ -1082,8 +1134,9 @@ const AdminDashboard = ({ isAuthenticated }) => {
           Cancel
         </button>
       </div>
-    </form>
-  );
+      </form>
+    );
+  };
 
   const renderCategoryForm = (onCancel) => (
     <form className="form-card" onSubmit={handleSaveCategory}>
@@ -1103,16 +1156,6 @@ const AdminDashboard = ({ isAuthenticated }) => {
           value={categoryForm.description}
           onChange={(e) => setCategoryForm({...categoryForm, description: e.target.value})}
         />
-      </div>
-      <div className="form-group">
-        <label>Category Type</label>
-        <select
-          value={categoryForm.type}
-          onChange={(e) => setCategoryForm({ ...categoryForm, type: e.target.value })}
-        >
-          <option value="product">Physical Products</option>
-          <option value="eservice">E-Services</option>
-        </select>
       </div>
       <div className="form-group">
         <label>Category Image URL (Google Drive)</label>
@@ -1166,6 +1209,54 @@ const AdminDashboard = ({ isAuthenticated }) => {
           <option value="USD">USD</option>
         </select>
       </div>
+      <div className="admin-preview-panel">
+        <h4>Live Preview</h4>
+        <div className="preview-category-card">
+          <div className="preview-category-image">
+            <img
+              src={normalizeImageUrl(categoryForm.image) || logo}
+              alt={categoryForm.name || 'Category preview'}
+            />
+          </div>
+          <div className="preview-category-info">
+            <input
+              className="preview-input"
+              type="text"
+              placeholder="Category name"
+              value={categoryForm.name}
+              onChange={(e) => setCategoryForm({ ...categoryForm, name: e.target.value })}
+            />
+            <textarea
+              className="preview-textarea"
+              placeholder="Category description"
+              value={categoryForm.description}
+              onChange={(e) => setCategoryForm({ ...categoryForm, description: e.target.value })}
+            />
+            <div className="preview-price">
+              <div className="preview-field">
+                <label>Price</label>
+                <input
+                  className="preview-input"
+                  type="number"
+                  step="0.01"
+                  value={categoryForm.defaultPrice}
+                  onChange={(e) => setCategoryForm({ ...categoryForm, defaultPrice: e.target.value })}
+                />
+              </div>
+              <div className="preview-field">
+                <label>Discount %</label>
+                <input
+                  className="preview-input"
+                  type="number"
+                  step="0.1"
+                  value={categoryForm.defaultDiscount}
+                  onChange={(e) => setCategoryForm({ ...categoryForm, defaultDiscount: e.target.value })}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
       <div className="form-buttons">
         <button type="submit" className="btn-primary">Save</button>
         <button
@@ -1207,7 +1298,6 @@ const AdminDashboard = ({ isAuthenticated }) => {
         >
           <option value="">Select Parent Category</option>
           {categories
-            .filter(cat => !currentType || cat.type === currentType)
             .map(cat => (
               <option key={cat._id} value={cat._id}>{cat.name}</option>
             ))}
@@ -1253,6 +1343,54 @@ const AdminDashboard = ({ isAuthenticated }) => {
           <option value="USD">USD</option>
         </select>
       </div>
+      <div className="admin-preview-panel">
+        <h4>Live Preview</h4>
+        <div className="preview-category-card">
+          <div className="preview-category-image">
+            <img
+              src={normalizeImageUrl(subCategoryForm.image) || logo}
+              alt={subCategoryForm.name || 'Sub-category preview'}
+            />
+          </div>
+          <div className="preview-category-info">
+            <input
+              className="preview-input"
+              type="text"
+              placeholder="Sub-category name"
+              value={subCategoryForm.name}
+              onChange={(e) => setSubCategoryForm({ ...subCategoryForm, name: e.target.value })}
+            />
+            <textarea
+              className="preview-textarea"
+              placeholder="Sub-category description"
+              value={subCategoryForm.description}
+              onChange={(e) => setSubCategoryForm({ ...subCategoryForm, description: e.target.value })}
+            />
+            <div className="preview-price">
+              <div className="preview-field">
+                <label>Default price</label>
+                <input
+                  className="preview-input"
+                  type="number"
+                  step="0.01"
+                  value={subCategoryForm.defaultPrice}
+                  onChange={(e) => setSubCategoryForm({ ...subCategoryForm, defaultPrice: e.target.value })}
+                />
+              </div>
+              <div className="preview-field">
+                <label>Default discount %</label>
+                <input
+                  className="preview-input"
+                  type="number"
+                  step="0.1"
+                  value={subCategoryForm.defaultDiscount}
+                  onChange={(e) => setSubCategoryForm({ ...subCategoryForm, defaultDiscount: e.target.value })}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
       <div className="form-buttons">
         <button type="submit" className="btn-primary">Save</button>
         <button
@@ -1273,6 +1411,12 @@ const AdminDashboard = ({ isAuthenticated }) => {
           <h2>Admin Panel</h2>
         </div>
         <nav className="sidebar-nav">
+          <button
+            className={`nav-item ${activeTab === 'products' ? 'active' : ''}`}
+            onClick={() => setActiveTab('products')}
+          >
+            🧾 Products
+          </button>
           <button
             className={`nav-item ${activeTab === 'orders' ? 'active' : ''}`}
             onClick={() => setActiveTab('orders')}
@@ -1451,7 +1595,7 @@ const AdminDashboard = ({ isAuthenticated }) => {
                           <option key={sub._id} value={sub._id}>{sub.name}</option>
                         ))
                       ) : (
-                        categories.filter(cat => cat.type === 'product').map(cat => (
+                        categories.map(cat => (
                           <React.Fragment key={cat._id}>
                             <option value={cat._id}>{cat.name}</option>
                             {subCategories.filter(s => s.category?._id === cat._id).map(sub => (
@@ -1595,9 +1739,9 @@ const AdminDashboard = ({ isAuthenticated }) => {
             {(activeTab === 'eservices' || activeTab === 'products') && (
               <div className="tab-content" style={{ marginTop: '2rem' }}>
                 <div className="content-header">
-                  <h2>{currentTypeLabel} Categories</h2>
+                  <h2>Categories</h2>
                   <div className="header-buttons">
-                      <button className="btn-primary" onClick={() => currentType === 'eservice' ? handleAddEserviceCategory() : handleAddCategory()}>
+                      <button className="btn-primary" onClick={handleAddCategory}>
                         + Add Top Category
                       </button>
                       <button className="btn-secondary" onClick={handleOpenBatchEdit} disabled={selectedProducts.length === 0} style={{marginLeft: '8px'}}>
@@ -1608,10 +1752,10 @@ const AdminDashboard = ({ isAuthenticated }) => {
                 {showCategoryForm && renderCategoryForm(() => setShowCategoryForm(false))}
                 <h3 style={{ marginTop: '1rem' }}>Top-Level Categories</h3>
                 <div className="categories-grid">
-                  {categories.filter(cat => cat.type === currentType).length === 0 ? (
+                  {categories.length === 0 ? (
                     <p>No top-level categories yet.</p>
                   ) : (
-                    categories.filter(cat => cat.type === currentType).map(category => (
+                    categories.map(category => (
                       <React.Fragment key={category._id}>
                           <div className="category-card">
                             <div className="category-image-wrapper">
@@ -1660,10 +1804,10 @@ const AdminDashboard = ({ isAuthenticated }) => {
                 </div>
                 {showSubCategoryForm && renderSubCategoryForm(() => setShowSubCategoryForm(false))}
                 <div className="categories-grid">
-                  {subCategories.filter(sc => sc.category?.type === currentType).length === 0 ? (
+                  {subCategories.length === 0 ? (
                     <p>No sub-categories yet.</p>
                     ) : (
-                    subCategories.filter(sc => sc.category?.type === currentType).map((sub, idx) => (
+                    subCategories.map((sub, idx) => (
                       <React.Fragment key={sub._id}>
                         <div className="category-card">
                           <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between'}}>

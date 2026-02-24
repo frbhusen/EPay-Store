@@ -83,8 +83,7 @@ const Cart = () => {
 
   const updateQuantity = (productId, newQuantity) => {
     if (newQuantity <= 0) {
-      removeFromCart(productId);
-      return;
+      newQuantity = 1;
     }
 
     const updatedCart = cartItems.map(item =>

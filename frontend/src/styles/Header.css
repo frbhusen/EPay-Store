@@ -1,136 +1,134 @@
-/* Color Palette
-   Primary Light: #C4E9FE
-   Primary Medium: #70B0F0
-   Primary Dark: #047DCB
-*/
-
-:root {
-  --color-light: #C4E9FE;
-  --color-medium: #70B0F0;
-  --color-dark: #005c9a;
-  --color-gray-light: #f8f9fa;
-  --color-gray-dark: #333;
-  --color-white: #ffffff;
-  --color-error: #dc3545;
-  --color-success: #28a745;
-}
-
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-html, body {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background-color: var(--color-gray-light);
-  color: var(--color-gray-dark);
-}
+/* Dark Theme Header */
 
 .header {
-  background: linear-gradient(-135deg, var(--color-medium) 0%, var(--color-dark) 100%);
-  color: var(--color-white);
+  background: #1a1a1a;
   padding: 1rem 0;
-  box-shadow: 0 4px 12px rgba(4, 125, 203, 0.15);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
   position: sticky;
   top: 0;
   z-index: 100;
 }
 
 .header-container {
-  max-width: 1200px;
+  max-width: 1400px;
   margin: 0 auto;
-  padding: 0 1rem;
+  padding: 0 2rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 
-.logo h1 {
-  font-size: 1.8rem;
-  font-weight: bold;
-  letter-spacing: -0.5px;
+.sidebar-toggle {
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px;
+  transition: all 0.3s;
+}
+
+.sidebar-toggle:hover {
+  transform: scale(1.1);
+}
+
+.sidebar-toggle span {
+  display: block;
+  width: 25px;
+  height: 3px;
+  background: #fff;
+  border-radius: 2px;
+  transition: all 0.3s;
+}
+
+.logo {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  cursor: pointer;
+  transition: transform 0.3s;
+}
+
+.logo:hover {
+  transform: translateX(-50%) scale(1.05);
 }
 
 .logo-img {
   height: 50px;
   width: auto;
-  max-width: 200px;
-  object-fit: contain;
-  transition: transform 0.3s ease;
 }
 
-.logo-img:hover {
-  transform: scale(1.05);
-}
-
-.nav {
+.header-actions {
   display: flex;
-  gap: 2rem;
+  gap: 1rem;
   align-items: center;
 }
 
-.nav-link {
-  color: var(--color-white);
-  text-decoration: none;
-  font-weight: 500;
-  transition: all 0.3s ease;
-  padding: 0.5rem 1rem;
-  border-radius: 4px;
-  position: relative;
-}
-
-.nav-link:hover {
-  background-color: rgba(255, 255, 255, 0.1);
-  transform: translateY(-2px);
-}
-
-.nav-link.cart-link {
-  background-color: rgba(255, 255, 255, 0.2);
-}
-
-.lang-btn {
-  background: linear-gradient(135deg, var(--color-light) 0%, var(--color-white) 100%);
-  color: var(--color-dark);
-  border: 2px solid rgba(255, 255, 255, 0.6);
+.currency-toggle {
+  background: #2a2a2a;
+  border: 2px solid #444;
+  color: #fff;
+  padding: 0.5rem 1.2rem;
   border-radius: 8px;
-  padding: 0.5rem 1.1rem;
-  font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 12px rgba(4, 125, 203, 0.15);
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: all 0.3s;
 }
 
-.lang-btn:hover {
+.currency-toggle:hover {
+  background: #333;
+  border-color: #555;
   transform: translateY(-2px);
-  background: var(--color-white);
-  color: var(--color-dark);
+}
+
+.cart-icon {
+  background: none;
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  position: relative;
+  padding: 0.5rem;
+  transition: all 0.3s;
+}
+
+.cart-icon:hover {
+  transform: scale(1.1);
+}
+
+.cart-icon svg {
+  display: block;
 }
 
 .cart-badge {
-  background-color: var(--color-light);
-  color: var(--color-dark);
+  position: absolute;
+  top: 0;
+  right: 0;
+  background: #e74c3c;
+  color: #fff;
   border-radius: 50%;
-  padding: 0.2rem 0.5rem;
-  font-size: 0.8rem;
-  font-weight: bold;
-  margin-left: 0.3rem;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  font-weight: 700;
 }
 
-/* Responsive */
 @media (max-width: 768px) {
   .header-container {
-    flex-direction: column;
-    gap: 1rem;
+    padding: 0 1rem;
   }
 
-  .nav {
-    gap: 1rem;
-    font-size: 0.9rem;
+  .logo-img {
+    height: 40px;
   }
 
-  .logo h1 {
-    font-size: 1.4rem;
+  .currency-toggle {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.8rem;
   }
 }
 

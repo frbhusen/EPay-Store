@@ -50,6 +50,46 @@ const productSchema = new mongoose.Schema({
     enum: ['SYP', 'USD', null],
     default: null
   },
+  mostVisited: {
+    type: Boolean,
+    default: false
+  },
+  ratings: [{
+    user: {
+      type: String,
+      required: true
+    },
+    rating: {
+      type: Number,
+      required: true,
+      min: 1,
+      max: 5
+    },
+    createdAt: {
+      type: Date,
+      default: Date.now
+    }
+  }],
+  reviews: [{
+    user: {
+      type: String,
+      required: true
+    },
+    comment: {
+      type: String,
+      required: true
+    },
+    rating: {
+      type: Number,
+      required: true,
+      min: 1,
+      max: 5
+    },
+    createdAt: {
+      type: Date,
+      default: Date.now
+    }
+  }],
   createdAt: {
     type: Date,
     default: Date.now
@@ -63,6 +103,18 @@ const productSchema = new mongoose.Schema({
 // Calculate final price with discount
 productSchema.virtual('finalPrice').get(function() {
   return this.price * (1 - this.discount / 100);
+});
+
+// Calculate average rating
+productSchema.virtual('averageRating').get(function() {
+  if (this.ratings.length === 0) return 0;
+  const sum = this.ratings.reduce((acc, r) => acc + r.rating, 0);
+  return (sum / this.ratings.length).toFixed(1);
+});
+
+// Get total review count
+productSchema.virtual('reviewCount').get(function() {
+  return this.reviews.length;
 });
 
 productSchema.set('toJSON', { virtuals: true });

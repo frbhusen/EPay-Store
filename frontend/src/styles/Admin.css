@@ -5,10 +5,14 @@
   align-items: center;
   background: linear-gradient(135deg, var(--color-light) 0%, var(--color-medium) 100%);
   padding: 1rem;
+  direction: ltr;
 }
 
 .login-card {
   background: white;
+  color: #000;
+  direction: ltr;
+  text-align: left;
   padding: 3rem;
   border-radius: 12px;
   box-shadow: 0 10px 40px rgba(4, 125, 203, 0.2);
@@ -57,6 +61,8 @@
   border: 2px solid var(--color-light);
   border-radius: 6px;
   font-size: 1rem;
+  color: #000;
+  background: #fff;
   transition: all 0.3s ease;
 }
 

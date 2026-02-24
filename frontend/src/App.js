@@ -2,10 +2,12 @@ import React, { useState, useEffect } from 'react';
 import './i18n';
 import { useTranslation } from 'react-i18next';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { CurrencyProvider } from './context/CurrencyContext';
 import Header from './components/Header';
 import Home from './components/Home';
 import Products from './components/Products';
 import EServices from './components/EServices';
+import ProductDetails from './components/ProductDetails';
 import Cart from './components/Cart';
 import AdminLogin from './admin/AdminLogin';
 import AdminDashboard from './admin/AdminDashboard';
@@ -21,6 +23,10 @@ function AppRoutes() {
     const token = localStorage.getItem('adminToken');
     setIsAdminAuthenticated(!!token);
     updateCartCount();
+    
+    // Listen for cart updates
+    window.addEventListener('cartUpdated', updateCartCount);
+    return () => window.removeEventListener('cartUpdated', updateCartCount);
   }, []);
 
   useEffect(() => {
@@ -91,6 +97,10 @@ function AppRoutes() {
             <Header cartCount={cartCount} />
             <EServices />
           </>} />
+          <Route path="/product/:id" element={<>
+            <Header cartCount={cartCount} />
+            <ProductDetails />
+          </>} />
           <Route path="/cart" element={<>
             <Header cartCount={cartCount} />
             <Cart />
@@ -106,9 +116,11 @@ function AppRoutes() {
 
 function App() {
   return (
-    <Router>
-      <AppRoutes />
-    </Router>
+    <CurrencyProvider>
+      <Router>
+        <AppRoutes />
+      </Router>
+    </CurrencyProvider>
   );
 }
 

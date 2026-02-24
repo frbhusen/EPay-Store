@@ -91,17 +91,17 @@
 }
 
 .product-card {
-  background: white;
+  background: #1a1a1a;
   border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
   transition: all 0.3s ease;
   animation: slideInUp 0.5s ease-out;
 }
 
 .product-card:hover {
   transform: translateY(-8px);
-  box-shadow: 0 12px 28px rgba(4, 125, 203, 0.2);
+  box-shadow: 0 12px 28px rgba(76, 175, 80, 0.25);
 }
 
 /* make product cards behave like service cards so buttons align */
@@ -117,7 +117,7 @@
   overflow: hidden;
   aspect-ratio: 40   / 56;
   max-height: 480px;
-  background: #ffffff; /* match card border/background */
+  background: #0f0f0f;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -126,7 +126,7 @@
 
 .service-image-wrapper.logo-default,
 .product-image-wrapper.logo-default {
-  background: #ffffff;
+  background: #0f0f0f;
 }
 
 .product-image-wrapper { flex: 0 0 auto; }
@@ -136,7 +136,7 @@
   height: 100%;
   object-fit: contain;
   transition: transform 0.3s ease;
-  background-color: #fff;
+  background-color: #0f0f0f;
 }
 
 /* Service-style image wrapper used in category/sub-category cards */
@@ -145,7 +145,7 @@
   overflow: hidden;
   aspect-ratio: 40 / 56;
   max-height: 480px;
-  background: #ffffff;
+  background: #0f0f0f;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -157,7 +157,7 @@
   height: 100%;
   object-fit: contain;
   transition: transform 0.3s ease;
-  background-color: #fff;
+  background-color: #0f0f0f;
 }
 
 .service-image.logo-default,
@@ -196,7 +196,7 @@
 }
 
 .product-content h3 {
-  color: var(--color-dark);
+  color: #f0f0f0;
   font-size: 1.2rem;
   margin-bottom: 0.5rem;
   line-height: 1.3;
@@ -209,7 +209,7 @@
 }
 
 .product-description {
-  color: #666;
+  color: #bdbdbd;
   font-size: 0.95rem;
   line-height: 1.6;
   margin-bottom: 1rem;
@@ -217,7 +217,7 @@
 }
 
 .category-description {
-  color: #666;
+  color: #bdbdbd;
   font-size: 0.95rem;
   line-height: 1.6;
   white-space: pre-wrap;
@@ -231,13 +231,13 @@
 }
 
 .original-price {
-  color: #999;
+  color: #8f8f8f;
   text-decoration: line-through;
   font-size: 0.9rem;
 }
 
 .final-price {
-  color: var(--color-dark);
+  color: #4caf50;
   font-size: 1.5rem;
   font-weight: bold;
 }

@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "scripts": {
     "start": "cd backend && npm start",
+    "build": "react-scripts build",
     "install": "cd backend && npm install"
   },
   "dependencies": {

@@ -146,6 +146,13 @@ const EServices = () => {
     alert(`${service.name} ${t('eservices.added')}`);
   };
 
+  const getShortDescription = (text, maxLen = 90) => {
+    if (!text) return '';
+    const trimmed = text.trim();
+    if (trimmed.length <= maxLen) return trimmed;
+    return `${trimmed.slice(0, maxLen - 3)}...`;
+  };
+
   const handleCategoryClick = async (category) => {
     setSelectedCategory(category);
     setServices([]);
@@ -289,7 +296,7 @@ const EServices = () => {
                     </div>
                     <div className="service-content">
                       <h3>{service.name}</h3>
-                      <p className="service-description">{service.description}</p>
+                      <p className="service-description">{getShortDescription(service.description)}</p>
                       <div className="service-pricing">
                         {service.discount > 0 ? (
                           <>

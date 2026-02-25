@@ -115,8 +115,7 @@
 .product-image-wrapper {
   position: relative;
   overflow: hidden;
-  aspect-ratio: 40   / 56;
-  max-height: 480px;
+  aspect-ratio: 1 / 1;
   background: #0f0f0f;
   display: flex;
   align-items: center;
@@ -143,8 +142,7 @@
 .service-image-wrapper {
   position: relative;
   overflow: hidden;
-  aspect-ratio: 40 / 56;
-  max-height: 480px;
+  aspect-ratio: 1 / 1;
   background: #0f0f0f;
   display: flex;
   align-items: center;

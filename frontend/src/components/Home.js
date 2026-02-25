@@ -48,6 +48,13 @@ const Home = () => {
     navigate(`/product/${productId}`);
   };
 
+  const getShortDescription = (text, maxLen = 90) => {
+    if (!text) return '';
+    const trimmed = text.trim();
+    if (trimmed.length <= maxLen) return trimmed;
+    return `${trimmed.slice(0, maxLen - 3)}...`;
+  };
+
 const renderProduct = (product) => {
     const finalPrice = product.price * (1 - (product.discount || 0) / 100);
     
@@ -61,6 +68,9 @@ const renderProduct = (product) => {
         </div>
         <div className="product-info">
           <h4>{product.name}</h4>
+          {product.description && (
+            <p className="product-desc-short">{getShortDescription(product.description)}</p>
+          )}
           <div className="product-rating">
             <div className="stars">
               {[1, 2, 3, 4, 5].map(star => (

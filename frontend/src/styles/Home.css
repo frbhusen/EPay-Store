@@ -124,7 +124,7 @@
 .product-image-wrapper {
   position: relative;
   width: 100%;
-  height: 250px;
+  aspect-ratio: 1 / 1;
   overflow: hidden;
   background: #222;
 }
@@ -163,6 +163,17 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.product-desc-short {
+  color: #bdbdbd;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  margin-bottom: 0.8rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .product-rating {

@@ -148,6 +148,13 @@ const Products = () => {
     return displayCurrency === 'USD' ? `$${amount}` : `SYP ${amount}`;
   };
 
+  const getShortDescription = (text, maxLen = 90) => {
+    if (!text) return '';
+    const trimmed = text.trim();
+    if (trimmed.length <= maxLen) return trimmed;
+    return `${trimmed.slice(0, maxLen - 3)}...`;
+  };
+
   const handleAddToCart = (product) => {
     const cart = JSON.parse(localStorage.getItem('cart') || '[]');
     const existingItem = cart.find(item => item._id === product._id);
@@ -278,7 +285,7 @@ const Products = () => {
                       </div>
                       <div className="service-content">
                         <h3>{product.name}</h3>
-                        <p className="service-description">{product.description}</p>
+                        <p className="service-description">{getShortDescription(product.description)}</p>
                         <div className="service-pricing">
                           {product.discount > 0 ? (
                             <>
@@ -352,7 +359,7 @@ const Products = () => {
                     </div>
                     <div className="service-content">
                       <h3>{product.name}</h3>
-                      <p className="service-description">{product.description}</p>
+                      <p className="service-description">{getShortDescription(product.description)}</p>
                       <div className="service-pricing">
                         {product.discount > 0 ? (
                           <>
